@@ -106,11 +106,15 @@ h1 { margin: 0; font-size: clamp(16px, 2.5vw, 24px); line-height: 1.15; letter-s
 .dashboard-toolbar > span { color: var(--muted); font-size: 13px; }
 .date-filter { position: relative; display: flex; align-items: center; margin-left: auto; }
 .date-filter-trigger { min-height: 40px; height: 40px; border-radius: 8px; color: var(--muted); font-size: 12px; font-weight: 400; }
+.date-filter-trigger:hover, .date-filter-trigger[data-state="open"] { color: #000; border-color: var(--line); background: #f5f5f5; }
 .date-filter-clear { position: absolute; right: 4px; color: var(--muted); background: #fff; }
 .date-filter:has(.date-filter-clear) .date-filter-trigger { padding-right: 40px; }
-.date-picker-popover { z-index: 30; padding: 12px; border: 1px solid var(--line); border-radius: 14px; background: #fff; animation: rise .2s var(--ease) both; }
+.date-picker-popover { width: max-content; max-width: calc(100vw - 24px); z-index: 30; padding: 12px; border: 1px solid var(--line); border-radius: 14px; background: #fff; animation: rise .2s var(--ease) both; }
 .date-picker-arrow { fill: #fff; stroke: var(--line); stroke-width: 1px; }
 .date-picker-popover .rdp-root { --rdp-accent-color: #000; --rdp-accent-background-color: #f5f5f5; --rdp-day-height: 36px; --rdp-day-width: 36px; margin: 0; }
+.date-picker-popover .rdp-month_grid { width: auto; border-collapse: collapse; }
+.date-picker-popover .rdp-weekday, .date-picker-popover .rdp-day { padding: 0; border: 0; background: transparent; text-align: center; text-transform: none; }
+.date-picker-popover .rdp-week { cursor: default; }
 .date-picker-popover .rdp-month_caption { font-weight: 500; }
 .date-picker-popover .rdp-dropdown { font: inherit; }
 .date-picker-popover .rdp-day_button { border-radius: 8px; font-size: 12px; }
@@ -118,12 +122,12 @@ h1 { margin: 0; font-size: clamp(16px, 2.5vw, 24px); line-height: 1.15; letter-s
 .date-picker-popover .rdp-selected .rdp-day_button { color: #fff; background: #000; }
 .survey-table-card { min-height: 280px; margin-top: 16px; overflow: hidden; border: 1px solid var(--line); border-radius: 20px; background: white; }
 .table-scroll { overflow-x: auto; }
-table { width: 100%; border-collapse: collapse; }
-th { padding: 15px 18px; color: var(--muted); background: #fff; font-size: 11px; letter-spacing: .08em; text-align: left; text-transform: uppercase; }
-td { padding: 18px; border-top: 1px solid var(--line); color: var(--muted); font-size: 14px; }
-td strong { color: var(--ink); letter-spacing: .05em; }
-tbody tr { cursor: pointer; transition: background .16s var(--ease); }
-tbody tr:hover { background: #fff; }
+.survey-table-card table { width: 100%; border-collapse: collapse; }
+.survey-table-card th { padding: 15px 18px; color: var(--muted); background: #fff; font-size: 11px; letter-spacing: .08em; text-align: left; text-transform: uppercase; }
+.survey-table-card td { padding: 18px; border-top: 1px solid var(--line); color: var(--muted); font-size: 14px; }
+.survey-table-card td strong { color: var(--ink); letter-spacing: .05em; }
+.survey-table-card tbody tr { cursor: pointer; transition: background .16s var(--ease); }
+.survey-table-card tbody tr:hover { background: #fff; }
 .status-badge { min-height: 27px; padding: 5px 9px; color: #6f5a25; border-color: #c8ad67; }
 .status-complete { color: #000; border-color: #a3a3a3; background: #fff; }
 .status-follow-up-in-progress { color: #315c85; border-color: #86aac8; background: #fff; }
@@ -191,7 +195,7 @@ textarea { min-height: 110px; padding: 14px; resize: vertical; }
 .matrix-legend strong { margin-right: 3px; color: var(--ink); }
 .matrix-scroll { overflow-x: auto; outline: none; scrollbar-color: #bbb transparent; }
 .matrix-scroll:focus-visible { outline: 2px solid #000; outline-offset: -2px; }
-.barrier-matrix { min-width: 720px; table-layout: fixed; }
+.barrier-matrix { width: 100%; min-width: 720px; border-collapse: collapse; table-layout: fixed; }
 .barrier-matrix th, .barrier-matrix td { border-top: 1px solid var(--line); background: #fff; }
 .barrier-matrix thead th { position: sticky; top: 0; z-index: 2; padding: 14px 8px; color: var(--ink); font-size: 12px; text-align: center; }
 .barrier-matrix thead th:first-child { width: 400px; padding-left: 24px; text-align: left; }
@@ -228,7 +232,7 @@ textarea { min-height: 110px; padding: 14px; resize: vertical; }
   .date-filter-trigger { width: 100%; justify-content: flex-start; }
   .dashboard-toolbar > span { padding-left: 2px; }
   .survey-table-card { margin-left: -5px; margin-right: -5px; border-radius: 16px; }
-  th, td { padding: 14px; }
+  .survey-table-card th, .survey-table-card td { padding: 14px; }
   .survey-header { height: 68px; padding: 0 16px; }
   .progress-track { top: 68px; }
   .survey-layout { display: block; padding: 30px 15px 75px; }
