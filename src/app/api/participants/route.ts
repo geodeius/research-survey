@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { after, NextRequest, NextResponse } from "next/server";
 import { google } from "googleapis";
 import { allQuestions, sheetHeaders } from "@/lib/survey";
 import { authorisedResearcher } from "@/lib/supabase-server";
@@ -85,6 +85,8 @@ export async function POST(request: Request) {
   const { error } = await auth.admin.from("participants").upsert(row);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   await auth.admin.from("audit_log").insert({ participant_id: participant.id, researcher_email: auth.email, action: "saved" });
-  try { await syncToSheets(participant); } catch (error) { console.error("Google Sheets sync failed", error); }
-  return NextResponse.json({ ok: true, participantId: participant.id });
+  after(async () => {
+    try { await syncToSheets(participant); } catch (error) { console.error("Google Sheets sync failed", error); }
+  });
+  return NextResponse.json({ ok: true, participantId: participant.id, sheetSync: "queued" });
 }

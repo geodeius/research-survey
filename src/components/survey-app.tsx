@@ -7,6 +7,7 @@ import {
   ArrowRight,
   CaretDown,
   Check,
+  CheckCircle,
   Cloud,
   CloudSlash as CloudOff,
   FileText,
@@ -31,8 +32,10 @@ import { Skeleton } from "./ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "./ui/table";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "./ui/dropdown-menu";
 
-type Screen = "login" | "dashboard" | "survey";
+type Screen = "login" | "dashboard" | "survey" | "success";
 type DashboardParticipant = Participant & { answeredCount?: number; isSummary?: boolean };
+type Submission = { synced: boolean; detail: string };
+type MessageTone = "error" | "pending" | "success";
 const dashboardPageSize = 8;
 
 export function SurveyApp() {
@@ -46,6 +49,8 @@ export function SurveyApp() {
   const [dashboardLoading, setDashboardLoading] = useState(false);
   const [sectionIndex, setSectionIndex] = useState(0);
   const [message, setMessage] = useState("");
+  const [messageTone, setMessageTone] = useState<MessageTone>("error");
+  const [submission, setSubmission] = useState<Submission | null>(null);
   const [saving, setSaving] = useState(false);
   const [online, setOnline] = useState(true);
   const [createdDate, setCreatedDate] = useState<Date>();
@@ -203,26 +208,79 @@ export function SurveyApp() {
     setScreen("survey");
   }
 
+  async function syncParticipant(record: Participant) {
+    const supabase = createSupabaseBrowserClient();
+    if (!supabase) throw new Error("The synchronization service is not configured.");
+
+    let token = accessToken;
+    if (!token) {
+      const { data } = await supabase.auth.getSession();
+      token = data.session?.access_token || "";
+    }
+
+    const post = (bearer: string) => fetch("/api/participants", {
+      method: "POST",
+      headers: { "content-type": "application/json", authorization: `Bearer ${bearer}` },
+      body: JSON.stringify(record),
+    });
+
+    let response = await post(token);
+    if (response.status === 401) {
+      const { data, error } = await supabase.auth.refreshSession();
+      if (error || !data.session) throw new Error("Your sign-in session has expired. Please sign in again.");
+      token = data.session.access_token;
+      setAccessToken(token);
+      response = await post(token);
+    }
+
+    const result = await response.json().catch(() => ({ error: "The service returned an unreadable response." })) as { error?: string; sheetSync?: string };
+    if (!response.ok) throw new Error(result.error || `Synchronization failed (${response.status}).`);
+    return result;
+  }
+
   async function saveParticipant(next = false) {
-    if (!participant) return;
+    if (!participant || saving) return;
     setSaving(true);
+    setMessage("");
     const updated = { ...participant, updatedAt: new Date().toISOString() };
     saveLocalParticipant(updated);
     setParticipant(updated);
+
+    let synced = false;
+    let detail = "Saved on this device. Synchronization is pending.";
     if (online) {
       try {
-        const response = await fetch("/api/participants", {
-          method: "POST",
-          headers: { "content-type": "application/json", authorization: `Bearer ${accessToken}` },
-          body: JSON.stringify(updated),
-        });
-        if (!response.ok && response.status !== 503) throw new Error("sync failed");
-      } catch {
-        setMessage("Saved on this device. It will need to be synchronized when the service is connected.");
+        await syncParticipant(updated);
+        synced = true;
+        detail = "Saved to the study database. Google Sheets synchronization has been queued.";
+      } catch (error) {
+        detail = error instanceof Error ? error.message : "Synchronization failed. The record remains saved on this device.";
       }
     }
+
     setSaving(false);
-    if (next && sectionIndex < surveySections.length - 1) setSectionIndex((index) => index + 1);
+    const isFinalSection = sectionIndex === surveySections.length - 1;
+    if (isFinalSection) {
+      setSubmission({ synced, detail });
+      setScreen("success");
+    } else {
+      setMessage(synced ? "Saved and synchronized." : `Saved locally — ${detail}`);
+      setMessageTone(synced ? "success" : "pending");
+      if (next) setSectionIndex((index) => index + 1);
+    }
+  }
+
+  async function retrySubmissionSync() {
+    if (!participant || saving) return;
+    setSaving(true);
+    try {
+      await syncParticipant(participant);
+      setSubmission({ synced: true, detail: "Saved to the study database. Google Sheets synchronization has been queued." });
+    } catch (error) {
+      setSubmission({ synced: false, detail: error instanceof Error ? error.message : "Synchronization failed. Please try again." });
+    } finally {
+      setSaving(false);
+    }
   }
 
   if (screen === "login") {
@@ -240,6 +298,29 @@ export function SurveyApp() {
             <Button className="primary-button" type="submit">Continue <ArrowRight data-icon="inline-end" size={18} /></Button>
           </form>
           <p className="privacy-note">{hasSupabaseConfig() ? "We’ll email you a secure sign-in link. Only approved researcher emails can open study records." : "Development preview: connect Supabase to enforce the approved researcher list."}</p>
+        </section>
+      </main>
+    );
+  }
+
+  if (screen === "success" && participant && submission) {
+    return (
+      <main className="shell completion-shell">
+        <section className="completion-card" aria-labelledby="submission-title">
+          <div className={`completion-icon ${submission.synced ? "synced" : "pending"}`}><CheckCircle size={34} weight="fill" /></div>
+          <p className="eyebrow">Record saved</p>
+          <h1 id="submission-title">Survey submission recorded</h1>
+          <p className="completion-lede">The participant record is safe and can still be edited later.</p>
+          <div className="completion-summary">
+            <div><span>Research ID</span><strong>{participant.id}</strong></div>
+            <div><span>Synchronization</span><Badge variant="outline" className={submission.synced ? "completion-synced" : "completion-pending"}>{submission.synced ? "Database saved" : "Pending"}</Badge></div>
+          </div>
+          <p className={`completion-detail ${submission.synced ? "success" : "pending"}`}>{submission.detail}</p>
+          <div className="completion-actions">
+            <Button variant="outline" onClick={() => { setSubmission(null); setScreen("survey"); }}>Continue editing</Button>
+            <Button onClick={() => { setSubmission(null); setScreen("dashboard"); }}>Return to dashboard <ArrowRight data-icon="inline-end" size={18} /></Button>
+          </div>
+          {!submission.synced && <Button className="retry-sync-button" variant="ghost" disabled={saving || !online} onClick={retrySubmissionSync}>{saving ? "Retrying…" : online ? "Retry synchronization" : "Connect to the internet to retry"}</Button>}
         </section>
       </main>
     );
@@ -329,10 +410,10 @@ export function SurveyApp() {
             <BarrierMatrix questions={section.questions} answers={participant.answers} onChange={(id, value) => setParticipant({ ...participant, answers: { ...participant.answers, [id]: value } })} />
           ) : section.questions.map((question) => <QuestionField key={question.id} question={question} answers={participant.answers} onChange={(id, value) => setParticipant({ ...participant, answers: { ...participant.answers, [id]: value } })} />)}
           {sectionIndex === surveySections.length - 1 && <article className="question-card"><label className="field-label" htmlFor="notes">Research notes (no personal identifiers)</label><textarea id="notes" value={participant.notes} onChange={(event) => setParticipant({ ...participant, notes: event.target.value })} placeholder="Optional clinical or follow-up notes" /></article>}
-          {message && <p className="save-message">{message}</p>}
+          {message && <p className={`save-message ${messageTone}`}>{message}</p>}
           <footer className="form-actions">
-            <Button className="secondary-button" variant="outline" disabled={sectionIndex === 0} onClick={() => setSectionIndex((index) => Math.max(0, index - 1))}><ArrowLeft data-icon="inline-start" size={18} /> Previous</Button>
-            <Button className="primary-button" onClick={() => saveParticipant(true)}>{sectionIndex === surveySections.length - 1 ? "Save record" : "Save & continue"}<ArrowRight data-icon="inline-end" size={18} /></Button>
+            <Button className="secondary-button" variant="outline" disabled={saving || sectionIndex === 0} onClick={() => setSectionIndex((index) => Math.max(0, index - 1))}><ArrowLeft data-icon="inline-start" size={18} /> Previous</Button>
+            <Button className="primary-button" disabled={saving} onClick={() => saveParticipant(true)}>{saving ? "Saving…" : sectionIndex === surveySections.length - 1 ? "Save record" : "Save & continue"}{!saving && <ArrowRight data-icon="inline-end" size={18} />}</Button>
           </footer>
         </section>
       </div>
