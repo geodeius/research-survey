@@ -27,6 +27,8 @@ import { Badge } from "./ui/badge";
 import { DatePicker } from "./ui/date-picker";
 import { Pagination } from "./ui/pagination";
 import { InputGroup, InputGroupAddon, InputGroupInput } from "./ui/input-group";
+import { Skeleton } from "./ui/skeleton";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "./ui/table";
 
 type Screen = "login" | "dashboard" | "survey";
 
@@ -240,13 +242,13 @@ export function SurveyApp() {
             <span>{visibleParticipants.length} {visibleParticipants.length === 1 ? "survey" : "surveys"}</span>
           </div>
           <div className="survey-table-card">
-            {dashboardLoading ? <div className="dashboard-state"><span className="loading-dot" /> Loading your surveys…</div> : visibleParticipants.length === 0 ? (
+            {dashboardLoading ? <SurveyTableSkeleton /> : visibleParticipants.length === 0 ? (
               <div className="dashboard-empty"><div className="empty-icon"><FileText size={25} /></div><h2>{participants.length ? "No matching surveys" : "Your first survey starts here"}</h2><p>{participants.length ? "Try a different Research ID or status." : "Create a participant record now, then return here to continue it at follow-up."}</p>{!participants.length && <Button className="secondary-button" variant="outline" onClick={newParticipant}><UserPlus data-icon="inline-start" size={18} /> Create first survey</Button>}</div>
             ) : (
-              <div className="table-scroll"><table><thead><tr><th>Research ID</th><th>Hospital</th><th>Status</th><th>Answered</th><th>Created</th><th>Last updated</th><th><span className="sr-only">Action</span></th></tr></thead><tbody>{paginatedParticipants.map((record) => {
+              <Table><SurveyTableHeader /><TableBody>{paginatedParticipants.map((record) => {
                 const answered = allQuestions.filter((question) => { const value = record.answers[question.id]; return Array.isArray(value) ? value.length > 0 : Boolean(value); }).length;
-                return <tr key={record.id} onClick={() => openParticipant(record)}><td><strong>{record.id}</strong></td><td>{record.hospital}</td><td><Badge variant="outline" className={`status-badge status-${record.status.toLowerCase().replaceAll(" ", "-")}`}>{record.status}</Badge></td><td>{Math.round((answered / allQuestions.length) * 100)}%</td><td>{new Intl.DateTimeFormat("en-GB", { day: "2-digit", month: "short", year: "numeric" }).format(new Date(record.createdAt))}</td><td>{new Intl.DateTimeFormat("en-GB", { day: "2-digit", month: "short", year: "numeric" }).format(new Date(record.updatedAt))}</td><td><Button className="row-action" variant="ghost" size="xs" onClick={(event) => { event.stopPropagation(); openParticipant(record); }}>Edit <ArrowRight data-icon="inline-end" size={15} /></Button></td></tr>;
-              })}</tbody></table></div>
+                return <TableRow key={record.id} onClick={() => openParticipant(record)}><TableCell><strong>{record.id}</strong></TableCell><TableCell>{record.hospital}</TableCell><TableCell><Badge variant="outline" className={`status-badge status-${record.status.toLowerCase().replaceAll(" ", "-")}`}>{record.status}</Badge></TableCell><TableCell>{Math.round((answered / allQuestions.length) * 100)}%</TableCell><TableCell>{new Intl.DateTimeFormat("en-GB", { day: "2-digit", month: "short", year: "numeric" }).format(new Date(record.createdAt))}</TableCell><TableCell>{new Intl.DateTimeFormat("en-GB", { day: "2-digit", month: "short", year: "numeric" }).format(new Date(record.updatedAt))}</TableCell><TableCell><Button className="row-action" variant="ghost" size="xs" onClick={(event) => { event.stopPropagation(); openParticipant(record); }}>Edit <ArrowRight data-icon="inline-end" size={15} /></Button></TableCell></TableRow>;
+              })}</TableBody></Table>
             )}
           </div>
           <Pagination page={safePage} totalPages={totalPages} onPageChange={setCurrentPage} />
@@ -298,5 +300,24 @@ export function SurveyApp() {
         </section>
       </div>
     </main>
+  );
+}
+
+function SurveyTableHeader() {
+  return <TableHeader><TableRow><TableHead>Research ID</TableHead><TableHead>Hospital</TableHead><TableHead>Status</TableHead><TableHead>Answered</TableHead><TableHead>Created</TableHead><TableHead>Last updated</TableHead><TableHead><span className="sr-only">Action</span></TableHead></TableRow></TableHeader>;
+}
+
+function SurveyTableSkeleton() {
+  return (
+    <Table aria-label="Loading surveys">
+      <SurveyTableHeader />
+      <TableBody>
+        {Array.from({ length: 3 }, (_, row) => (
+          <TableRow className="skeleton-table-row" key={row}>
+            {[92, 130, 112, 38, 82, 82, 48].map((width, cell) => <TableCell key={cell}><Skeleton className="skeleton-line" style={{ width }} /></TableCell>)}
+          </TableRow>
+        ))}
+      </TableBody>
+    </Table>
   );
 }
