@@ -32,8 +32,13 @@ export async function GET(request: NextRequest) {
   const auth = await authorisedResearcher(request);
   if (!auth) return NextResponse.json({ error: "Unauthorised researcher" }, { status: 401 });
   const id = request.nextUrl.searchParams.get("id")?.toUpperCase();
-  if (!id) return NextResponse.json({ error: "Research ID is required" }, { status: 400 });
-  const { data, error } = await auth.admin.from("participants").select("*").eq("id", id).maybeSingle();
+  if (!id) {
+    const { data, error } = await auth.admin.from("participants").select("*").eq("researcher_email", auth.email).order("updated_at", { ascending: false });
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    const participants = (data || []).map((row) => ({ id: row.id, hospital: row.hospital, status: row.status, researcherEmail: row.researcher_email, answers: row.answers, notes: row.notes, createdAt: row.created_at, updatedAt: row.updated_at }));
+    return NextResponse.json({ participants });
+  }
+  const { data, error } = await auth.admin.from("participants").select("*").eq("id", id).eq("researcher_email", auth.email).maybeSingle();
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   if (!data) return NextResponse.json({ error: "Participant not found" }, { status: 404 });
   return NextResponse.json({ participant: { id: data.id, hospital: data.hospital, status: data.status, researcherEmail: data.researcher_email, answers: data.answers, notes: data.notes, createdAt: data.created_at, updatedAt: data.updated_at } });

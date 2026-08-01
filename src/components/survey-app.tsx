@@ -1,21 +1,23 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { ArrowLeft, ArrowRight, Check, Cloud, CloudOff, LockKeyhole, Search, UserPlus } from "lucide-react";
-import { createResearchId, normalizeResearchId } from "@/lib/id";
+import { ArrowLeft, ArrowRight, Check, Cloud, CloudOff, FileText, LockKeyhole, Search, UserPlus } from "lucide-react";
+import { createResearchId } from "@/lib/id";
 import { allQuestions, surveySections } from "@/lib/survey";
 import { getLocalParticipants, saveLocalParticipant } from "@/lib/store";
 import { Participant } from "@/lib/types";
 import { createSupabaseBrowserClient, hasSupabaseConfig } from "@/lib/supabase-browser";
 import { QuestionField } from "./question-field";
 
-type Screen = "login" | "lookup" | "survey";
+type Screen = "login" | "dashboard" | "survey";
 
 export function SurveyApp() {
   const [screen, setScreen] = useState<Screen>("login");
   const [email, setEmail] = useState("");
   const [researchId, setResearchId] = useState("");
   const [participant, setParticipant] = useState<Participant | null>(null);
+  const [participants, setParticipants] = useState<Participant[]>([]);
+  const [dashboardLoading, setDashboardLoading] = useState(false);
   const [sectionIndex, setSectionIndex] = useState(0);
   const [message, setMessage] = useState("");
   const [saving, setSaving] = useState(false);
@@ -38,17 +40,22 @@ export function SurveyApp() {
     supabase.auth.getSession().then(({ data }) => {
       if (data.session?.user.email) {
         setEmail(data.session.user.email);
-        setScreen("lookup");
+        setScreen("dashboard");
       }
     });
     const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
       if (session?.user.email) {
         setEmail(session.user.email);
-        setScreen("lookup");
+        setScreen("dashboard");
       }
     });
     return () => listener.subscription.unsubscribe();
   }, []);
+
+  useEffect(() => {
+    if (screen !== "dashboard" || !email) return;
+    void loadDashboard();
+  }, [screen, email]);
 
   const completed = useMemo(() => {
     if (!participant) return 0;
@@ -73,24 +80,24 @@ export function SurveyApp() {
     }
     sessionStorage.setItem("dolii-researcher", email.toLowerCase());
     setMessage("");
-    setScreen("lookup");
+    setScreen("dashboard");
   }
 
-  async function findParticipant(event: React.FormEvent) {
-    event.preventDefault();
-    const normalized = normalizeResearchId(researchId);
-    let found = getLocalParticipants().find((record) => record.id === normalized);
+  async function loadDashboard() {
+    setDashboardLoading(true);
+    let records = getLocalParticipants().filter((record) => record.researcherEmail === email.toLowerCase());
     if (hasSupabaseConfig()) {
       const supabase = createSupabaseBrowserClient();
       const { data: { session } } = await supabase!.auth.getSession();
-      const response = await fetch(`/api/participants?id=${encodeURIComponent(normalized)}`, { headers: { authorization: `Bearer ${session?.access_token || ""}` } });
-      if (response.ok) found = (await response.json()).participant as Participant;
+      const response = await fetch("/api/participants", { headers: { authorization: `Bearer ${session?.access_token || ""}` } });
+      if (response.ok) records = (await response.json()).participants as Participant[];
     }
-    if (!found) {
-      setMessage("No participant was found with that Research ID.");
-      return;
-    }
-    setParticipant(found);
+    setParticipants(records.sort((a, b) => b.updatedAt.localeCompare(a.updatedAt)));
+    setDashboardLoading(false);
+  }
+
+  function openParticipant(record: Participant) {
+    setParticipant(record);
     setSectionIndex(0);
     setMessage("");
     setScreen("survey");
@@ -158,22 +165,33 @@ export function SurveyApp() {
     );
   }
 
-  if (screen === "lookup") {
+  if (screen === "dashboard") {
+    const normalizedQuery = researchId.trim().toLowerCase();
+    const visibleParticipants = participants.filter((record) =>
+      [record.id, record.hospital, record.status].some((value) => value.toLowerCase().includes(normalizedQuery)),
+    );
     return (
-      <main className="shell lookup-shell">
+      <main className="shell dashboard-shell">
         <header className="topbar"><div><span className="mini-mark">D</span><strong>DOLII Survey</strong></div><span className="researcher">{email}</span></header>
-        <section className="lookup-panel">
-          <p className="eyebrow">Participant records</p>
-          <h1>Who are you recording today?</h1>
-          <p className="lede">Enter the Research ID exactly as shown in the study log.</p>
-          <form onSubmit={findParticipant} className="lookup-form">
-            <label className="field-label" htmlFor="researchId">Research ID</label>
-            <div className="input-with-icon research-input"><Search size={20} /><input id="researchId" value={researchId} onChange={(event) => setResearchId(normalizeResearchId(event.target.value))} placeholder="DOL-XXXXXX" /></div>
-            {message && <p className="inline-error">{message}</p>}
-            <button className="primary-button" type="submit">Open questionnaire <ArrowRight size={18} /></button>
-          </form>
-          <div className="or-divider"><span>or</span></div>
-          <button className="secondary-button" onClick={newParticipant}><UserPlus size={19} /> Register new participant</button>
+        <section className="dashboard-content">
+          <div className="dashboard-heading">
+            <div><p className="eyebrow">Researcher workspace</p><h1>Your surveys</h1><p>Continue an existing record or begin a new participant survey.</p></div>
+            <button className="primary-button new-survey-button" onClick={newParticipant}><UserPlus size={19} /> New survey</button>
+          </div>
+          <div className="dashboard-toolbar">
+            <div className="input-with-icon dashboard-search"><Search size={19} /><input aria-label="Search surveys" value={researchId} onChange={(event) => setResearchId(event.target.value)} placeholder="Search Research ID, hospital, or status" /></div>
+            <span>{participants.length} {participants.length === 1 ? "survey" : "surveys"}</span>
+          </div>
+          <div className="survey-table-card">
+            {dashboardLoading ? <div className="dashboard-state"><span className="loading-dot" /> Loading your surveys…</div> : visibleParticipants.length === 0 ? (
+              <div className="dashboard-empty"><div className="empty-icon"><FileText size={25} /></div><h2>{participants.length ? "No matching surveys" : "Your first survey starts here"}</h2><p>{participants.length ? "Try a different Research ID or status." : "Create a participant record now, then return here to continue it at follow-up."}</p>{!participants.length && <button className="secondary-button" onClick={newParticipant}><UserPlus size={18} /> Create first survey</button>}</div>
+            ) : (
+              <div className="table-scroll"><table><thead><tr><th>Research ID</th><th>Hospital</th><th>Status</th><th>Answered</th><th>Last updated</th><th><span className="sr-only">Action</span></th></tr></thead><tbody>{visibleParticipants.map((record) => {
+                const answered = allQuestions.filter((question) => { const value = record.answers[question.id]; return Array.isArray(value) ? value.length > 0 : Boolean(value); }).length;
+                return <tr key={record.id} onClick={() => openParticipant(record)}><td><strong>{record.id}</strong></td><td>{record.hospital}</td><td><span className={`status-badge status-${record.status.toLowerCase().replaceAll(" ", "-")}`}>{record.status}</span></td><td>{Math.round((answered / allQuestions.length) * 100)}%</td><td>{new Intl.DateTimeFormat("en-GB", { day: "2-digit", month: "short", year: "numeric" }).format(new Date(record.updatedAt))}</td><td><button className="row-action" onClick={(event) => { event.stopPropagation(); openParticipant(record); }}>Edit <ArrowRight size={15} /></button></td></tr>;
+              })}</tbody></table></div>
+            )}
+          </div>
         </section>
       </main>
     );
@@ -186,7 +204,7 @@ export function SurveyApp() {
   return (
     <main className="survey-shell">
       <header className="survey-header">
-        <button className="icon-button" aria-label="Back to participant search" onClick={() => setScreen("lookup")}><ArrowLeft size={21} /></button>
+        <button className="icon-button" aria-label="Back to surveys dashboard" onClick={() => setScreen("dashboard")}><ArrowLeft size={21} /></button>
         <div><p>Research ID</p><strong>{participant.id}</strong></div>
         <div className={`sync-pill ${online ? "" : "offline"}`}>{online ? <Cloud size={16} /> : <CloudOff size={16} />}{saving ? "Saving" : online ? "Ready" : "Offline"}</div>
       </header>
