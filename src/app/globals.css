@@ -59,6 +59,15 @@ h1 { margin: 0; font-size: clamp(32px, 5vw, 48px); line-height: 1.08; letter-spa
 .button [data-icon="inline-end"] { margin-right: -2px; }
 .primary-button { width: 100%; margin-top: 16px; }
 .secondary-button { width: 100%; }
+.badge { min-height: 24px; display: inline-flex; align-items: center; justify-content: center; gap: 5px; padding: 3px 8px; border: 1px solid transparent; border-radius: 999px; font-size: 11px; font-weight: 500; line-height: 1; white-space: nowrap; }
+.badge--default { color: #fff; background: #000; }
+.badge--secondary { color: var(--ink); background: #f3f5f3; }
+.badge--destructive { color: #fff; background: #a33a2b; }
+.badge--outline { color: var(--ink); border-color: var(--line); background: #fff; }
+.badge--ghost { color: var(--muted); background: transparent; }
+.badge--link { min-height: auto; padding: 0; color: var(--green); background: transparent; text-decoration: underline; text-underline-offset: 3px; }
+.badge [data-icon="inline-start"] { margin-left: -2px; }
+.badge [data-icon="inline-end"] { margin-right: -2px; }
 .privacy-note { margin: 24px 0 0; color: var(--muted); font-size: 12px; line-height: 1.55; }
 .inline-error, .save-message { color: #a33a2b; font-size: 13px; }
 
@@ -90,7 +99,7 @@ td { padding: 18px; border-top: 1px solid var(--line); color: #4f625c; font-size
 td strong { color: var(--ink); letter-spacing: .05em; }
 tbody tr { cursor: pointer; transition: background .16s var(--ease); }
 tbody tr:hover { background: #fff; }
-.status-badge { display: inline-flex; padding: 6px 9px; border: 1px solid #c8ad67; border-radius: 999px; color: #6f5a25; background: #fff; font-size: 11px; font-weight: 500; white-space: nowrap; }
+.status-badge { min-height: 27px; padding: 5px 9px; color: #6f5a25; border-color: #c8ad67; }
 .status-complete { color: var(--green); border-color: #7bb3a5; background: #fff; }
 .status-follow-up-in-progress { color: #315c85; border-color: #86aac8; background: #fff; }
 .row-action { font-size: 12px; }
@@ -110,7 +119,7 @@ tbody tr:hover { background: #fff; }
 .survey-header p { margin: 0 0 2px; color: var(--muted); font-size: 10px; letter-spacing: .1em; text-transform: uppercase; }
 .survey-header strong { letter-spacing: .08em; }
 .icon-button { border-radius: 13px; }
-.sync-pill { justify-self: end; display: flex; align-items: center; gap: 7px; padding: 8px 12px; border: 1px solid #7bb3a5; border-radius: 999px; color: var(--green); background: #fff; font-size: 12px; font-weight: 500; }
+.sync-pill { min-height: 34px; justify-self: end; gap: 7px; padding: 7px 12px; border-color: #7bb3a5; color: var(--green); font-size: 12px; }
 .sync-pill.offline { color: #9a4a36; border-color: #cf9a8b; background: #fff; }
 .progress-track { height: 3px; position: sticky; top: 78px; z-index: 11; background: #fff; border-bottom: 1px solid var(--line); }
 .progress-track span { display: block; height: 100%; background: #000; transition: width .25s var(--ease); }

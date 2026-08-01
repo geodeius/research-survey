@@ -20,6 +20,7 @@ import { createSupabaseBrowserClient, hasSupabaseConfig } from "@/lib/supabase-b
 import { QuestionField } from "./question-field";
 import { BarrierMatrix } from "./barrier-matrix";
 import { Button } from "./ui/button";
+import { Badge } from "./ui/badge";
 
 type Screen = "login" | "dashboard" | "survey";
 
@@ -200,7 +201,7 @@ export function SurveyApp() {
             ) : (
               <div className="table-scroll"><table><thead><tr><th>Research ID</th><th>Hospital</th><th>Status</th><th>Answered</th><th>Last updated</th><th><span className="sr-only">Action</span></th></tr></thead><tbody>{visibleParticipants.map((record) => {
                 const answered = allQuestions.filter((question) => { const value = record.answers[question.id]; return Array.isArray(value) ? value.length > 0 : Boolean(value); }).length;
-                return <tr key={record.id} onClick={() => openParticipant(record)}><td><strong>{record.id}</strong></td><td>{record.hospital}</td><td><span className={`status-badge status-${record.status.toLowerCase().replaceAll(" ", "-")}`}>{record.status}</span></td><td>{Math.round((answered / allQuestions.length) * 100)}%</td><td>{new Intl.DateTimeFormat("en-GB", { day: "2-digit", month: "short", year: "numeric" }).format(new Date(record.updatedAt))}</td><td><Button className="row-action" variant="ghost" size="xs" onClick={(event) => { event.stopPropagation(); openParticipant(record); }}>Edit <ArrowRight data-icon="inline-end" size={15} /></Button></td></tr>;
+                return <tr key={record.id} onClick={() => openParticipant(record)}><td><strong>{record.id}</strong></td><td>{record.hospital}</td><td><Badge variant="outline" className={`status-badge status-${record.status.toLowerCase().replaceAll(" ", "-")}`}>{record.status}</Badge></td><td>{Math.round((answered / allQuestions.length) * 100)}%</td><td>{new Intl.DateTimeFormat("en-GB", { day: "2-digit", month: "short", year: "numeric" }).format(new Date(record.updatedAt))}</td><td><Button className="row-action" variant="ghost" size="xs" onClick={(event) => { event.stopPropagation(); openParticipant(record); }}>Edit <ArrowRight data-icon="inline-end" size={15} /></Button></td></tr>;
               })}</tbody></table></div>
             )}
           </div>
@@ -218,7 +219,7 @@ export function SurveyApp() {
       <header className="survey-header">
         <Button className="icon-button" variant="outline" size="icon" aria-label="Back to surveys dashboard" onClick={() => setScreen("dashboard")}><ArrowLeft size={21} /></Button>
         <div><p>Research ID</p><strong>{participant.id}</strong></div>
-        <div className={`sync-pill ${online ? "" : "offline"}`}>{online ? <Cloud size={16} /> : <CloudOff size={16} />}{saving ? "Saving" : online ? "Ready" : "Offline"}</div>
+        <Badge variant="outline" className={`sync-pill ${online ? "" : "offline"}`}>{online ? <Cloud data-icon="inline-start" size={16} /> : <CloudOff data-icon="inline-start" size={16} />}{saving ? "Saving" : online ? "Ready" : "Offline"}</Badge>
       </header>
       <div className="progress-track"><span style={{ width: `${progress}%` }} /></div>
       <div className="survey-layout">
