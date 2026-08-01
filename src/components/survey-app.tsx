@@ -19,6 +19,7 @@ import { Participant } from "@/lib/types";
 import { createSupabaseBrowserClient, hasSupabaseConfig } from "@/lib/supabase-browser";
 import { QuestionField } from "./question-field";
 import { BarrierMatrix } from "./barrier-matrix";
+import { Button } from "./ui/button";
 
 type Screen = "login" | "dashboard" | "survey";
 
@@ -168,7 +169,7 @@ export function SurveyApp() {
             <label className="field-label" htmlFor="email">Researcher email</label>
             <div className="input-with-icon"><LockKeyhole size={19} /><input id="email" type="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="researcher@example.com" autoComplete="email" /></div>
             {message && <p className="inline-error">{message}</p>}
-            <button className="primary-button" type="submit">Continue <ArrowRight size={18} /></button>
+            <Button className="primary-button" type="submit">Continue <ArrowRight data-icon="inline-end" size={18} /></Button>
           </form>
           <p className="privacy-note">{hasSupabaseConfig() ? "We’ll email you a secure sign-in link. Only approved researcher emails can open study records." : "Development preview: connect Supabase to enforce the approved researcher list."}</p>
         </section>
@@ -187,7 +188,7 @@ export function SurveyApp() {
         <section className="dashboard-content">
           <div className="dashboard-heading">
             <div><p className="eyebrow">Researcher workspace</p><h1>Your surveys</h1><p>Continue an existing record or begin a new participant survey.</p></div>
-            <button className="primary-button new-survey-button" onClick={newParticipant}><UserPlus size={19} /> New survey</button>
+            <Button className="primary-button new-survey-button" onClick={newParticipant}><UserPlus data-icon="inline-start" size={19} /> New survey</Button>
           </div>
           <div className="dashboard-toolbar">
             <div className="input-with-icon dashboard-search"><Search size={19} /><input aria-label="Search surveys" value={researchId} onChange={(event) => setResearchId(event.target.value)} placeholder="Search Research ID, hospital, or status" /></div>
@@ -195,11 +196,11 @@ export function SurveyApp() {
           </div>
           <div className="survey-table-card">
             {dashboardLoading ? <div className="dashboard-state"><span className="loading-dot" /> Loading your surveys…</div> : visibleParticipants.length === 0 ? (
-              <div className="dashboard-empty"><div className="empty-icon"><FileText size={25} /></div><h2>{participants.length ? "No matching surveys" : "Your first survey starts here"}</h2><p>{participants.length ? "Try a different Research ID or status." : "Create a participant record now, then return here to continue it at follow-up."}</p>{!participants.length && <button className="secondary-button" onClick={newParticipant}><UserPlus size={18} /> Create first survey</button>}</div>
+              <div className="dashboard-empty"><div className="empty-icon"><FileText size={25} /></div><h2>{participants.length ? "No matching surveys" : "Your first survey starts here"}</h2><p>{participants.length ? "Try a different Research ID or status." : "Create a participant record now, then return here to continue it at follow-up."}</p>{!participants.length && <Button className="secondary-button" variant="outline" onClick={newParticipant}><UserPlus data-icon="inline-start" size={18} /> Create first survey</Button>}</div>
             ) : (
               <div className="table-scroll"><table><thead><tr><th>Research ID</th><th>Hospital</th><th>Status</th><th>Answered</th><th>Last updated</th><th><span className="sr-only">Action</span></th></tr></thead><tbody>{visibleParticipants.map((record) => {
                 const answered = allQuestions.filter((question) => { const value = record.answers[question.id]; return Array.isArray(value) ? value.length > 0 : Boolean(value); }).length;
-                return <tr key={record.id} onClick={() => openParticipant(record)}><td><strong>{record.id}</strong></td><td>{record.hospital}</td><td><span className={`status-badge status-${record.status.toLowerCase().replaceAll(" ", "-")}`}>{record.status}</span></td><td>{Math.round((answered / allQuestions.length) * 100)}%</td><td>{new Intl.DateTimeFormat("en-GB", { day: "2-digit", month: "short", year: "numeric" }).format(new Date(record.updatedAt))}</td><td><button className="row-action" onClick={(event) => { event.stopPropagation(); openParticipant(record); }}>Edit <ArrowRight size={15} /></button></td></tr>;
+                return <tr key={record.id} onClick={() => openParticipant(record)}><td><strong>{record.id}</strong></td><td>{record.hospital}</td><td><span className={`status-badge status-${record.status.toLowerCase().replaceAll(" ", "-")}`}>{record.status}</span></td><td>{Math.round((answered / allQuestions.length) * 100)}%</td><td>{new Intl.DateTimeFormat("en-GB", { day: "2-digit", month: "short", year: "numeric" }).format(new Date(record.updatedAt))}</td><td><Button className="row-action" variant="ghost" size="xs" onClick={(event) => { event.stopPropagation(); openParticipant(record); }}>Edit <ArrowRight data-icon="inline-end" size={15} /></Button></td></tr>;
               })}</tbody></table></div>
             )}
           </div>
@@ -215,7 +216,7 @@ export function SurveyApp() {
   return (
     <main className="survey-shell">
       <header className="survey-header">
-        <button className="icon-button" aria-label="Back to surveys dashboard" onClick={() => setScreen("dashboard")}><ArrowLeft size={21} /></button>
+        <Button className="icon-button" variant="outline" size="icon" aria-label="Back to surveys dashboard" onClick={() => setScreen("dashboard")}><ArrowLeft size={21} /></Button>
         <div><p>Research ID</p><strong>{participant.id}</strong></div>
         <div className={`sync-pill ${online ? "" : "offline"}`}>{online ? <Cloud size={16} /> : <CloudOff size={16} />}{saving ? "Saving" : online ? "Ready" : "Offline"}</div>
       </header>
@@ -225,9 +226,9 @@ export function SurveyApp() {
           <div className="participant-summary"><span>{progress}%</span><p>Questionnaire answered</p></div>
           <nav>
             {surveySections.map((item, index) => (
-              <button key={item.id} className={index === sectionIndex ? "active" : ""} onClick={() => setSectionIndex(index)}>
+              <Button key={item.id} variant="ghost" size="sm" className={index === sectionIndex ? "active" : ""} onClick={() => setSectionIndex(index)}>
                 <span>{index < sectionIndex ? <Check size={15} /> : index + 1}</span>{item.shortTitle}
-              </button>
+              </Button>
             ))}
           </nav>
         </aside>
@@ -245,8 +246,8 @@ export function SurveyApp() {
           {sectionIndex === surveySections.length - 1 && <article className="question-card"><label className="field-label" htmlFor="notes">Research notes (no personal identifiers)</label><textarea id="notes" value={participant.notes} onChange={(event) => setParticipant({ ...participant, notes: event.target.value })} placeholder="Optional clinical or follow-up notes" /></article>}
           {message && <p className="save-message">{message}</p>}
           <footer className="form-actions">
-            <button className="secondary-button" disabled={sectionIndex === 0} onClick={() => setSectionIndex((index) => Math.max(0, index - 1))}><ArrowLeft size={18} /> Previous</button>
-            <button className="primary-button" onClick={() => saveParticipant(true)}>{sectionIndex === surveySections.length - 1 ? "Save record" : "Save & continue"}<ArrowRight size={18} /></button>
+            <Button className="secondary-button" variant="outline" disabled={sectionIndex === 0} onClick={() => setSectionIndex((index) => Math.max(0, index - 1))}><ArrowLeft data-icon="inline-start" size={18} /> Previous</Button>
+            <Button className="primary-button" onClick={() => saveParticipant(true)}>{sectionIndex === surveySections.length - 1 ? "Save record" : "Save & continue"}<ArrowRight data-icon="inline-end" size={18} /></Button>
           </footer>
         </section>
       </div>
