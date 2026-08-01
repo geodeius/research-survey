@@ -5,6 +5,9 @@ Browser-based, longitudinal questionnaire for the study **Delayed Onset of Lacto
 ## Included
 
 - Passwordless researcher email sign-in with an approval list
+- Researcher dashboard listing only surveys created by the signed-in researcher
+- Searchable survey table with status, completion percentage, and last-updated date
+- One-click editing of existing survey records and a prominent new-survey action
 - Automatic non-identifying Research IDs (`DOL-XXXXXX`)
 - Search and reopen participant records by Research ID
 - Seven staged questionnaire sections covering questions 1–75
