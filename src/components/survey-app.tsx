@@ -218,7 +218,7 @@ export function SurveyApp() {
         </header>
         <section className="dashboard-content">
           <div className="dashboard-heading">
-            <div><p className="eyebrow">Researcher workspace</p><h1>Your surveys</h1><p>Continue an existing record or begin a new participant survey.</p></div>
+            <div><h1>Your surveys</h1><p>Continue an existing record or begin a new participant survey.</p></div>
             <Button className="primary-button new-survey-button" onClick={newParticipant}><UserPlus data-icon="inline-start" size={19} /> New survey</Button>
           </div>
           <div className="dashboard-toolbar">

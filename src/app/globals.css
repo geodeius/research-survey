@@ -1,6 +1,6 @@
 :root {
   --ink: #17332e;
-  --muted: #667872;
+  --muted: #525252;
   --paper: #fff;
   --surface: #fff;
   --line: #dfe5de;
@@ -76,9 +76,9 @@ h1 { margin: 0; font-size: clamp(16px, 2.5vw, 24px); line-height: 1.15; letter-s
 .topbar > div { display: flex; gap: 12px; align-items: center; }
 .mini-mark { width: 36px; height: 36px; display: grid; place-items: center; border-radius: 11px; color: white; background: var(--ink); }
 .user-menu { position: relative; }
-.user-menu summary { display: flex; align-items: center; gap: 9px; min-height: 40px; padding: 3px 8px 3px 3px; border: 1px solid transparent; border-radius: 999px; color: var(--muted); font-size: 13px; list-style: none; cursor: pointer; transition: border-color .15s var(--ease), background-color .15s var(--ease); }
+.user-menu summary { display: flex; align-items: center; gap: 9px; min-height: 40px; padding: 3px 8px 3px 3px; border: 1px solid transparent; border-radius: 8px; color: var(--muted); font-size: 13px; list-style: none; cursor: pointer; transition: border-color .15s var(--ease), background-color .15s var(--ease); }
 .user-menu summary::-webkit-details-marker { display: none; }
-.user-menu summary:hover, .user-menu[open] summary { border-color: var(--line); background: #fff; }
+.user-menu summary:hover, .user-menu[open] summary { border-color: var(--line); border-radius: 8px; background: #fafafa; }
 .user-menu summary:focus-visible { outline: 3px solid #d8ddd9; outline-offset: 2px; }
 .researcher-avatar { width: 32px; height: 32px; display: grid; place-items: center; border-radius: 50%; color: #fff; background: #000; font-size: 12px; font-weight: 500; }
 .user-menu-caret { transition: transform .2s var(--ease); }
@@ -98,10 +98,10 @@ h1 { margin: 0; font-size: clamp(16px, 2.5vw, 24px); line-height: 1.15; letter-s
 .dashboard-heading { display: flex; align-items: flex-end; justify-content: space-between; gap: 30px; }
 .dashboard-heading h1 { font-size: clamp(19px, 2.5vw, 28px); }
 .dashboard-heading > div > p:last-child { margin: 13px 0 0; color: var(--muted); }
-.new-survey-button { width: auto; min-width: 142px; min-height: 40px; margin: 0; padding: 0 16px; border-radius: 12px; }
+.new-survey-button { width: auto; min-width: 132px; height: 32px; min-height: 32px; margin: 0; padding: 0 14px; border-radius: 8px; font-size: 16px; }
 .dashboard-toolbar { margin-top: 38px; display: flex; align-items: center; justify-content: space-between; gap: 20px; }
-.dashboard-search { width: min(100%, 430px); height: 40px; background: #fff; }
-.dashboard-search input { height: 38px; }
+.dashboard-search { width: min(100%, 430px); height: 40px; border-radius: 8px; background: #fff; }
+.dashboard-search input { height: 38px; font-size: 16px; }
 .dashboard-toolbar > span { color: var(--muted); font-size: 13px; }
 .survey-table-card { min-height: 280px; margin-top: 16px; overflow: hidden; border: 1px solid var(--line); border-radius: 20px; background: white; }
 .table-scroll { overflow-x: auto; }
