@@ -120,7 +120,7 @@ h1 { margin: 0; font-size: clamp(16px, 2.5vw, 24px); line-height: 1.15; letter-s
 .date-picker-popover .rdp-day_button { border-radius: 8px; font-size: 12px; }
 .date-picker-popover .rdp-day_button:hover { background: #f5f5f5; }
 .date-picker-popover .rdp-selected .rdp-day_button { color: #fff; background: #000; }
-.survey-table-card { min-height: 280px; margin-top: 16px; overflow: hidden; border: 1px solid var(--line); border-radius: 20px; background: white; }
+.survey-table-card { margin-top: 16px; overflow: hidden; border: 1px solid var(--line); border-radius: 20px; background: white; }
 .table-scroll { overflow-x: auto; }
 .survey-table-card table { width: 100%; border-collapse: collapse; }
 .survey-table-card th { padding: 15px 18px; color: var(--muted); background: #fff; font-size: 11px; letter-spacing: .08em; text-align: left; text-transform: uppercase; }
