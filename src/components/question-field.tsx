@@ -2,6 +2,7 @@
 
 import { Question } from "@/lib/survey";
 import { Answers } from "@/lib/types";
+import { Input } from "./ui/input";
 
 type Props = {
   question: Question;
@@ -17,8 +18,7 @@ export function QuestionField({ question, answers, onChange }: Props) {
     return (
       <article className="question-card">
         <QuestionHeading question={question} />
-        <input
-          className="text-input"
+        <Input
           inputMode={question.type === "number" ? "decimal" : "text"}
           type={question.type === "number" ? "number" : "text"}
           value={typeof value === "string" ? value : ""}
