@@ -104,6 +104,18 @@ h1 { margin: 0; font-size: clamp(16px, 2.5vw, 24px); line-height: 1.15; letter-s
 .dashboard-search { width: min(100%, 430px); height: 40px; padding-right: 12px; padding-left: 12px; border-radius: 8px; background: #fff; }
 .dashboard-search input { height: 38px; font-size: 16px; }
 .dashboard-toolbar > span { color: var(--muted); font-size: 13px; }
+.date-filter { position: relative; display: flex; align-items: center; margin-left: auto; }
+.date-filter-trigger { min-height: 40px; height: 40px; border-radius: 8px; color: var(--muted); font-size: 12px; font-weight: 400; }
+.date-filter-clear { position: absolute; right: 4px; color: var(--muted); background: #fff; }
+.date-filter:has(.date-filter-clear) .date-filter-trigger { padding-right: 40px; }
+.date-picker-popover { z-index: 30; padding: 12px; border: 1px solid var(--line); border-radius: 14px; background: #fff; animation: rise .2s var(--ease) both; }
+.date-picker-arrow { fill: #fff; stroke: var(--line); stroke-width: 1px; }
+.date-picker-popover .rdp-root { --rdp-accent-color: #000; --rdp-accent-background-color: #f5f5f5; --rdp-day-height: 36px; --rdp-day-width: 36px; margin: 0; }
+.date-picker-popover .rdp-month_caption { font-weight: 500; }
+.date-picker-popover .rdp-dropdown { font: inherit; }
+.date-picker-popover .rdp-day_button { border-radius: 8px; font-size: 12px; }
+.date-picker-popover .rdp-day_button:hover { background: #f5f5f5; }
+.date-picker-popover .rdp-selected .rdp-day_button { color: #fff; background: #000; }
 .survey-table-card { min-height: 280px; margin-top: 16px; overflow: hidden; border: 1px solid var(--line); border-radius: 20px; background: white; }
 .table-scroll { overflow-x: auto; }
 table { width: 100%; border-collapse: collapse; }
@@ -124,6 +136,10 @@ tbody tr:hover { background: #fff; }
 .dashboard-empty h2 { margin: 0; font-size: 25px; }
 .dashboard-empty p { max-width: 440px; margin: 10px 0 20px; color: var(--muted); line-height: 1.6; }
 .dashboard-empty .secondary-button { width: auto; }
+.pagination { display: flex; align-items: center; justify-content: flex-end; gap: 8px; margin-top: 16px; }
+.pagination-pages, .pagination-item { display: flex; align-items: center; gap: 4px; }
+.pagination .button { font-size: 12px; }
+.pagination-ellipsis { width: 24px; display: grid; place-items: center; color: var(--muted); }
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
 
 .survey-shell { min-height: 100vh; background: #fff; }
@@ -208,6 +224,8 @@ textarea { min-height: 110px; padding: 14px; resize: vertical; }
   .new-survey-button { width: 100%; }
   .dashboard-toolbar { align-items: stretch; flex-direction: column; gap: 9px; }
   .dashboard-search { width: 100%; }
+  .date-filter { width: 100%; margin-left: 0; }
+  .date-filter-trigger { width: 100%; justify-content: flex-start; }
   .dashboard-toolbar > span { padding-left: 2px; }
   .survey-table-card { margin-left: -5px; margin-right: -5px; border-radius: 16px; }
   th, td { padding: 14px; }

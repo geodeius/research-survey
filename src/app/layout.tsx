@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Instrument_Sans } from "next/font/google";
 import { DevTools } from "@/components/dev-tools";
+import "react-day-picker/style.css";
 import "./globals.css";
 
 const instrumentSans = Instrument_Sans({

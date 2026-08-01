@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { isSameDay, parseISO } from "date-fns";
 import {
   ArrowLeft,
   ArrowRight,
@@ -23,6 +24,8 @@ import { QuestionField } from "./question-field";
 import { BarrierMatrix } from "./barrier-matrix";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
+import { DatePicker } from "./ui/date-picker";
+import { Pagination } from "./ui/pagination";
 
 type Screen = "login" | "dashboard" | "survey";
 
@@ -37,6 +40,8 @@ export function SurveyApp() {
   const [message, setMessage] = useState("");
   const [saving, setSaving] = useState(false);
   const [online, setOnline] = useState(true);
+  const [createdDate, setCreatedDate] = useState<Date>();
+  const [currentPage, setCurrentPage] = useState(1);
 
   useEffect(() => {
     setOnline(navigator.onLine);
@@ -71,6 +76,8 @@ export function SurveyApp() {
     if (screen !== "dashboard" || !email) return;
     void loadDashboard();
   }, [screen, email]);
+
+  useEffect(() => setCurrentPage(1), [researchId, createdDate]);
 
   const completed = useMemo(() => {
     if (!participant) return 0;
@@ -197,8 +204,13 @@ export function SurveyApp() {
   if (screen === "dashboard") {
     const normalizedQuery = researchId.trim().toLowerCase();
     const visibleParticipants = participants.filter((record) =>
-      [record.id, record.hospital, record.status].some((value) => value.toLowerCase().includes(normalizedQuery)),
+      [record.id, record.hospital, record.status].some((value) => value.toLowerCase().includes(normalizedQuery)) &&
+      (!createdDate || isSameDay(parseISO(record.createdAt), createdDate)),
     );
+    const pageSize = 8;
+    const totalPages = Math.max(1, Math.ceil(visibleParticipants.length / pageSize));
+    const safePage = Math.min(currentPage, totalPages);
+    const paginatedParticipants = visibleParticipants.slice((safePage - 1) * pageSize, safePage * pageSize);
     return (
       <main className="shell dashboard-shell">
         <header className="topbar">
@@ -223,18 +235,20 @@ export function SurveyApp() {
           </div>
           <div className="dashboard-toolbar">
             <div className="input-with-icon dashboard-search"><Search size={19} /><input aria-label="Search surveys" value={researchId} onChange={(event) => setResearchId(event.target.value)} placeholder="Search Research ID, hospital, or status" /></div>
-            <span>{participants.length} {participants.length === 1 ? "survey" : "surveys"}</span>
+            <DatePicker date={createdDate} onChange={setCreatedDate} />
+            <span>{visibleParticipants.length} {visibleParticipants.length === 1 ? "survey" : "surveys"}</span>
           </div>
           <div className="survey-table-card">
             {dashboardLoading ? <div className="dashboard-state"><span className="loading-dot" /> Loading your surveys…</div> : visibleParticipants.length === 0 ? (
               <div className="dashboard-empty"><div className="empty-icon"><FileText size={25} /></div><h2>{participants.length ? "No matching surveys" : "Your first survey starts here"}</h2><p>{participants.length ? "Try a different Research ID or status." : "Create a participant record now, then return here to continue it at follow-up."}</p>{!participants.length && <Button className="secondary-button" variant="outline" onClick={newParticipant}><UserPlus data-icon="inline-start" size={18} /> Create first survey</Button>}</div>
             ) : (
-              <div className="table-scroll"><table><thead><tr><th>Research ID</th><th>Hospital</th><th>Status</th><th>Answered</th><th>Last updated</th><th><span className="sr-only">Action</span></th></tr></thead><tbody>{visibleParticipants.map((record) => {
+              <div className="table-scroll"><table><thead><tr><th>Research ID</th><th>Hospital</th><th>Status</th><th>Answered</th><th>Created</th><th>Last updated</th><th><span className="sr-only">Action</span></th></tr></thead><tbody>{paginatedParticipants.map((record) => {
                 const answered = allQuestions.filter((question) => { const value = record.answers[question.id]; return Array.isArray(value) ? value.length > 0 : Boolean(value); }).length;
-                return <tr key={record.id} onClick={() => openParticipant(record)}><td><strong>{record.id}</strong></td><td>{record.hospital}</td><td><Badge variant="outline" className={`status-badge status-${record.status.toLowerCase().replaceAll(" ", "-")}`}>{record.status}</Badge></td><td>{Math.round((answered / allQuestions.length) * 100)}%</td><td>{new Intl.DateTimeFormat("en-GB", { day: "2-digit", month: "short", year: "numeric" }).format(new Date(record.updatedAt))}</td><td><Button className="row-action" variant="ghost" size="xs" onClick={(event) => { event.stopPropagation(); openParticipant(record); }}>Edit <ArrowRight data-icon="inline-end" size={15} /></Button></td></tr>;
+                return <tr key={record.id} onClick={() => openParticipant(record)}><td><strong>{record.id}</strong></td><td>{record.hospital}</td><td><Badge variant="outline" className={`status-badge status-${record.status.toLowerCase().replaceAll(" ", "-")}`}>{record.status}</Badge></td><td>{Math.round((answered / allQuestions.length) * 100)}%</td><td>{new Intl.DateTimeFormat("en-GB", { day: "2-digit", month: "short", year: "numeric" }).format(new Date(record.createdAt))}</td><td>{new Intl.DateTimeFormat("en-GB", { day: "2-digit", month: "short", year: "numeric" }).format(new Date(record.updatedAt))}</td><td><Button className="row-action" variant="ghost" size="xs" onClick={(event) => { event.stopPropagation(); openParticipant(record); }}>Edit <ArrowRight data-icon="inline-end" size={15} /></Button></td></tr>;
               })}</tbody></table></div>
             )}
           </div>
+          <Pagination page={safePage} totalPages={totalPages} onPageChange={setCurrentPage} />
         </section>
       </main>
     );
