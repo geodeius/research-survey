@@ -4,12 +4,14 @@ import { useEffect, useMemo, useState } from "react";
 import {
   ArrowLeft,
   ArrowRight,
+  CaretDown,
   Check,
   Cloud,
   CloudSlash as CloudOff,
   FileText,
   LockKey as LockKeyhole,
   MagnifyingGlass as Search,
+  SignOut,
   UserPlus,
 } from "@phosphor-icons/react";
 import { createResearchId } from "@/lib/id";
@@ -109,6 +111,20 @@ export function SurveyApp() {
     setDashboardLoading(false);
   }
 
+  async function signOut() {
+    if (hasSupabaseConfig()) {
+      const supabase = createSupabaseBrowserClient();
+      await supabase?.auth.signOut();
+    }
+    sessionStorage.removeItem("dolii-researcher");
+    setEmail("");
+    setParticipants([]);
+    setParticipant(null);
+    setResearchId("");
+    setMessage("");
+    setScreen("login");
+  }
+
   function openParticipant(record: Participant) {
     setParticipant(record);
     setSectionIndex(0);
@@ -185,7 +201,21 @@ export function SurveyApp() {
     );
     return (
       <main className="shell dashboard-shell">
-        <header className="topbar"><div><span className="mini-mark">D</span><strong>DOLII Survey</strong></div><span className="researcher">{email}</span></header>
+        <header className="topbar">
+          <div><span className="mini-mark">D</span><strong>DOLII Survey</strong></div>
+          <details className="user-menu">
+            <summary aria-label={`Researcher menu for ${email}`}>
+              <span className="researcher-avatar" aria-hidden="true">{email.charAt(0).toUpperCase()}</span>
+              <span className="researcher-name">{email}</span>
+              <CaretDown className="user-menu-caret" size={14} />
+            </summary>
+            <div className="user-menu-panel">
+              <p>Signed in as</p>
+              <span>{email}</span>
+              <Button variant="ghost" size="sm" onClick={signOut}><SignOut data-icon="inline-start" size={17} /> Sign out</Button>
+            </div>
+          </details>
+        </header>
         <section className="dashboard-content">
           <div className="dashboard-heading">
             <div><p className="eyebrow">Researcher workspace</p><h1>Your surveys</h1><p>Continue an existing record or begin a new participant survey.</p></div>
