@@ -41,6 +41,8 @@ During local development, Agentation appears in the bottom-right corner on deskt
 
 The browser receives only the public anonymous key. The service-role key remains on the server.
 
+For an existing database created before sequential Research IDs were introduced, run `supabase/migrations/20260801_sequential_research_ids.sql` once in the Supabase SQL editor. New records then use `DOL-P001` for Pentecost Hospital and `DOL-M001` for Madina Polyclinic; existing IDs remain valid.
+
 ## Google Sheets setup
 
 1. Create a Google Cloud service account with Google Sheets API access.

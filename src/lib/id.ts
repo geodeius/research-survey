@@ -9,5 +9,5 @@ export function createResearchId() {
 
 export function normalizeResearchId(value: string) {
   const clean = value.toUpperCase().replace(/[^A-Z0-9]/g, "").replace(/^DOL/, "");
-  return clean ? `DOL-${clean.slice(0, 6)}` : "";
+  return clean ? `DOL-${clean.slice(0, 8)}` : "";
 }

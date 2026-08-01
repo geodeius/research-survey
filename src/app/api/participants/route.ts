@@ -84,7 +84,7 @@ export async function POST(request: Request) {
   const auth = await authorisedResearcher(request);
   if (!auth.ok) return NextResponse.json({ error: auth.error }, { status: auth.status });
   const participant = (await request.json()) as Participant;
-  if (!/^DOL-[A-Z0-9]{6}$/.test(participant.id)) return NextResponse.json({ error: "Invalid Research ID" }, { status: 400 });
+  if (!/^DOL-(?:[A-Z0-9]{6}|[A-Z][0-9]{3,})$/.test(participant.id)) return NextResponse.json({ error: "Invalid Research ID" }, { status: 400 });
   participant.researcherEmail = auth.email;
   const row = { id: participant.id, hospital: participant.hospital, status: participant.status, researcher_email: auth.email, answers: participant.answers, notes: participant.notes, created_at: participant.createdAt, updated_at: participant.updatedAt };
   const { error } = await auth.admin.from("participants").upsert(row);
