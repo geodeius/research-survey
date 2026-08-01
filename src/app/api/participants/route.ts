@@ -33,10 +33,41 @@ export async function GET(request: NextRequest) {
   if (!auth) return NextResponse.json({ error: "Unauthorised researcher" }, { status: 401 });
   const id = request.nextUrl.searchParams.get("id")?.toUpperCase();
   if (!id) {
-    const { data, error } = await auth.admin.from("participants").select("*").eq("researcher_email", auth.email).order("updated_at", { ascending: false });
+    const requestedPage = Number(request.nextUrl.searchParams.get("page") || "1");
+    const requestedPageSize = Number(request.nextUrl.searchParams.get("pageSize") || "8");
+    const page = Number.isFinite(requestedPage) ? Math.max(1, Math.floor(requestedPage)) : 1;
+    const pageSize = Number.isFinite(requestedPageSize) ? Math.min(50, Math.max(1, Math.floor(requestedPageSize))) : 8;
+    const search = (request.nextUrl.searchParams.get("query") || "").replace(/[^\p{L}\p{N}\s-]/gu, "").trim();
+    const createdDate = request.nextUrl.searchParams.get("createdDate");
+    const from = (page - 1) * pageSize;
+
+    let query = auth.admin.from("participants")
+      .select("id,hospital,status,researcher_email,answers,created_at,updated_at", { count: "exact" })
+      .eq("researcher_email", auth.email);
+    if (search) query = query.or(`id.ilike.%${search}%,hospital.ilike.%${search}%,status.ilike.%${search}%`);
+    if (createdDate && /^\d{4}-\d{2}-\d{2}$/.test(createdDate)) {
+      const nextDate = new Date(`${createdDate}T00:00:00.000Z`);
+      nextDate.setUTCDate(nextDate.getUTCDate() + 1);
+      query = query.gte("created_at", `${createdDate}T00:00:00.000Z`).lt("created_at", nextDate.toISOString());
+    }
+    const { data, error, count } = await query.order("updated_at", { ascending: false }).range(from, from + pageSize - 1);
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-    const participants = (data || []).map((row) => ({ id: row.id, hospital: row.hospital, status: row.status, researcherEmail: row.researcher_email, answers: row.answers, notes: row.notes, createdAt: row.created_at, updatedAt: row.updated_at }));
-    return NextResponse.json({ participants });
+    const participants = (data || []).map((row) => ({
+      id: row.id,
+      hospital: row.hospital,
+      status: row.status,
+      researcherEmail: row.researcher_email,
+      answers: {},
+      notes: "",
+      createdAt: row.created_at,
+      updatedAt: row.updated_at,
+      answeredCount: allQuestions.filter((question) => {
+        const value = (row.answers || {})[question.id];
+        return Array.isArray(value) ? value.length > 0 : Boolean(value);
+      }).length,
+      isSummary: true,
+    }));
+    return NextResponse.json({ participants, total: count || 0, page, pageSize });
   }
   const { data, error } = await auth.admin.from("participants").select("*").eq("id", id).eq("researcher_email", auth.email).maybeSingle();
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
