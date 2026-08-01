@@ -8,6 +8,7 @@ import { getLocalParticipants, saveLocalParticipant } from "@/lib/store";
 import { Participant } from "@/lib/types";
 import { createSupabaseBrowserClient, hasSupabaseConfig } from "@/lib/supabase-browser";
 import { QuestionField } from "./question-field";
+import { BarrierMatrix } from "./barrier-matrix";
 
 type Screen = "login" | "dashboard" | "survey";
 
@@ -228,7 +229,9 @@ export function SurveyApp() {
               <div><label className="field-label">Record status</label><select value={participant.status} onChange={(event) => setParticipant({ ...participant, status: event.target.value as Participant["status"] })}><option>Initial interview</option><option>Awaiting follow-up</option><option>Follow-up in progress</option><option>Complete</option></select></div>
             </article>
           )}
-          {section.questions.map((question) => <QuestionField key={question.id} question={question} answers={participant.answers} onChange={(id, value) => setParticipant({ ...participant, answers: { ...participant.answers, [id]: value } })} />)}
+          {section.id === "f" ? (
+            <BarrierMatrix questions={section.questions} answers={participant.answers} onChange={(id, value) => setParticipant({ ...participant, answers: { ...participant.answers, [id]: value } })} />
+          ) : section.questions.map((question) => <QuestionField key={question.id} question={question} answers={participant.answers} onChange={(id, value) => setParticipant({ ...participant, answers: { ...participant.answers, [id]: value } })} />)}
           {sectionIndex === surveySections.length - 1 && <article className="question-card"><label className="field-label" htmlFor="notes">Research notes (no personal identifiers)</label><textarea id="notes" value={participant.notes} onChange={(event) => setParticipant({ ...participant, notes: event.target.value })} placeholder="Optional clinical or follow-up notes" /></article>}
           {message && <p className="save-message">{message}</p>}
           <footer className="form-actions">

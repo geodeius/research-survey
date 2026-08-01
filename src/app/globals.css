@@ -122,6 +122,29 @@ textarea { min-height: 110px; padding: 14px; resize: vertical; }
 .scale-grid { grid-template-columns: repeat(5, 1fr); }
 .scale-grid .option { justify-content: center; flex-direction: column; gap: 5px; }
 .study-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; background: #fff; }
+.barrier-matrix-card { margin-bottom: 14px; overflow: hidden; border: 1px solid var(--line); border-radius: 20px; background: #fff; animation: rise .25s var(--ease) both; }
+.matrix-intro { padding: 25px 25px 20px; border-bottom: 1px solid var(--line); }
+.matrix-intro h2 { margin: 0; font-family: Georgia, "Times New Roman", serif; font-size: 24px; line-height: 1.25; letter-spacing: -.015em; }
+.matrix-intro > p { margin: 8px 0 0; color: var(--muted); font-size: 14px; }
+.matrix-legend { display: flex; flex-wrap: wrap; gap: 7px 18px; margin-top: 18px; color: var(--muted); font-size: 11px; }
+.matrix-legend span { white-space: nowrap; }
+.matrix-legend strong { margin-right: 3px; color: var(--ink); }
+.matrix-scroll { overflow-x: auto; outline: none; scrollbar-color: #bbb transparent; }
+.matrix-scroll:focus-visible { outline: 2px solid #000; outline-offset: -2px; }
+.barrier-matrix { min-width: 720px; table-layout: fixed; }
+.barrier-matrix th, .barrier-matrix td { border-top: 1px solid var(--line); background: #fff; }
+.barrier-matrix thead th { position: sticky; top: 0; z-index: 2; padding: 14px 8px; color: var(--ink); font-size: 12px; text-align: center; }
+.barrier-matrix thead th:first-child { width: 400px; padding-left: 24px; text-align: left; }
+.barrier-matrix thead abbr { text-decoration: none; cursor: help; }
+.barrier-matrix tbody th { position: sticky; left: 0; z-index: 1; width: 400px; padding: 18px 24px; color: var(--ink); font-size: 14px; font-weight: 650; line-height: 1.45; text-align: left; }
+.barrier-matrix tbody td { width: 64px; padding: 9px 4px; text-align: center; }
+.matrix-question-number { display: inline-grid; place-items: center; width: 25px; height: 25px; margin-right: 9px; border: 1px solid var(--line); border-radius: 8px; font-size: 10px; vertical-align: 1px; }
+.matrix-choice { width: 44px; height: 44px; display: inline-grid; place-items: center; border: 1px solid transparent; border-radius: 50%; cursor: pointer; transition: transform .14s var(--ease), border-color .14s ease; }
+.matrix-choice:hover { border-color: #bbb; }
+.matrix-choice:active { transform: scale(.94); }
+.matrix-choice.selected { border-color: #000; }
+.matrix-choice input { width: 19px; height: 19px; margin: 0; accent-color: #000; cursor: pointer; }
+.matrix-mobile-hint { display: none; margin: 0; padding: 11px 16px; border-top: 1px solid var(--line); color: var(--muted); font-size: 11px; }
 .form-actions { display: grid; grid-template-columns: 1fr 1.25fr; gap: 12px; margin-top: 26px; }
 .form-actions .primary-button { margin: 0; }
 .form-actions button:disabled { opacity: .4; cursor: not-allowed; }
@@ -154,6 +177,14 @@ textarea { min-height: 110px; padding: 14px; resize: vertical; }
   .section-nav button { flex: 0 0 auto; padding: 8px 10px; }
   .section-nav button span { display: none; }
   .question-card { padding: 19px 16px; border-radius: 17px; }
+  .barrier-matrix-card { border-radius: 17px; }
+  .matrix-intro { padding: 20px 16px 16px; }
+  .matrix-intro h2 { font-size: 21px; }
+  .matrix-legend { display: grid; grid-template-columns: 1fr 1fr; gap: 7px 12px; }
+  .barrier-matrix { min-width: 670px; }
+  .barrier-matrix thead th:first-child, .barrier-matrix tbody th { width: 350px; }
+  .barrier-matrix tbody th { padding: 15px 16px; font-size: 13px; }
+  .matrix-mobile-hint { display: block; }
   .study-fields { grid-template-columns: 1fr; }
   .form-actions { position: sticky; bottom: 0; z-index: 8; margin: 20px -15px -75px; padding: 12px 15px calc(12px + env(safe-area-inset-bottom)); border-top: 1px solid var(--line); background: #fff; }
 }
