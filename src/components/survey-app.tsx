@@ -233,7 +233,7 @@ export function SurveyApp() {
       response = await post(token);
     }
 
-    const result = await response.json().catch(() => ({ error: "The service returned an unreadable response." })) as { error?: string; sheetSync?: string };
+    const result = await response.json().catch(() => ({ error: "The service returned an unreadable response." })) as { error?: string; sheetSync?: "synced" | "failed"; sheetError?: string };
     if (!response.ok) throw new Error(result.error || `Synchronization failed (${response.status}).`);
     return result;
   }
@@ -250,9 +250,11 @@ export function SurveyApp() {
     let detail = "Saved on this device. Synchronization is pending.";
     if (online) {
       try {
-        await syncParticipant(updated);
+        const result = await syncParticipant(updated);
         synced = true;
-        detail = "Saved to the study database. Google Sheets synchronization has been queued.";
+        detail = result.sheetSync === "failed"
+          ? `Saved to the study database, but Google Sheets could not be updated: ${result.sheetError || "Unknown synchronization error"}`
+          : "Saved to the study database and Google Sheets.";
       } catch (error) {
         detail = error instanceof Error ? error.message : "Synchronization failed. The record remains saved on this device.";
       }
@@ -274,8 +276,13 @@ export function SurveyApp() {
     if (!participant || saving) return;
     setSaving(true);
     try {
-      await syncParticipant(participant);
-      setSubmission({ synced: true, detail: "Saved to the study database. Google Sheets synchronization has been queued." });
+      const result = await syncParticipant(participant);
+      setSubmission({
+        synced: true,
+        detail: result.sheetSync === "failed"
+          ? `Saved to the study database, but Google Sheets could not be updated: ${result.sheetError || "Unknown synchronization error"}`
+          : "Saved to the study database and Google Sheets.",
+      });
     } catch (error) {
       setSubmission({ synced: false, detail: error instanceof Error ? error.message : "Synchronization failed. Please try again." });
     } finally {

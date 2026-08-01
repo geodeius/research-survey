@@ -1,4 +1,4 @@
-import { after, NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { google } from "googleapis";
 import { allQuestions, sheetHeaders } from "@/lib/survey";
 import { authorisedResearcher } from "@/lib/supabase-server";
@@ -10,10 +10,15 @@ function rowFor(participant: Participant) {
 }
 
 async function syncToSheets(participant: Participant) {
-  if (!process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL || !process.env.GOOGLE_PRIVATE_KEY || !process.env.GOOGLE_SHEET_ID) return;
-  const auth = new google.auth.JWT({ email: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL, key: process.env.GOOGLE_PRIVATE_KEY.replace(/\\n/g, "\n"), scopes: ["https://www.googleapis.com/auth/spreadsheets"] });
-  const sheets = google.sheets({ version: "v4", auth });
+  const email = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL;
   const spreadsheetId = process.env.GOOGLE_SHEET_ID;
+  let key = process.env.GOOGLE_PRIVATE_KEY?.trim();
+  const missing = [!email && "GOOGLE_SERVICE_ACCOUNT_EMAIL", !key && "GOOGLE_PRIVATE_KEY", !spreadsheetId && "GOOGLE_SHEET_ID"].filter(Boolean);
+  if (missing.length) throw new Error(`Missing deployment variables: ${missing.join(", ")}`);
+  if ((key!.startsWith('"') && key!.endsWith('"')) || (key!.startsWith("'") && key!.endsWith("'"))) key = key!.slice(1, -1);
+  key = key!.replace(/\\n/g, "\n");
+  const auth = new google.auth.JWT({ email, key, scopes: ["https://www.googleapis.com/auth/spreadsheets"] });
+  const sheets = google.sheets({ version: "v4", auth });
   const sheetName = process.env.GOOGLE_SHEET_NAME || "Web app responses";
   const metadata = await sheets.spreadsheets.get({ spreadsheetId });
   const exists = metadata.data.sheets?.some((sheet) => sheet.properties?.title === sheetName);
@@ -85,8 +90,17 @@ export async function POST(request: Request) {
   const { error } = await auth.admin.from("participants").upsert(row);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   await auth.admin.from("audit_log").insert({ participant_id: participant.id, researcher_email: auth.email, action: "saved" });
-  after(async () => {
-    try { await syncToSheets(participant); } catch (error) { console.error("Google Sheets sync failed", error); }
-  });
-  return NextResponse.json({ ok: true, participantId: participant.id, sheetSync: "queued" });
+  try {
+    await syncToSheets(participant);
+    return NextResponse.json({ ok: true, participantId: participant.id, sheetSync: "synced" });
+  } catch (sheetError) {
+    const detail = sheetError instanceof Error ? sheetError.message : "Unknown Google Sheets error";
+    console.error("Google Sheets sync failed", { participantId: participant.id, detail });
+    return NextResponse.json({
+      ok: true,
+      participantId: participant.id,
+      sheetSync: "failed",
+      sheetError: detail,
+    });
+  }
 }
