@@ -26,6 +26,7 @@ import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
 import { DatePicker } from "./ui/date-picker";
 import { Pagination } from "./ui/pagination";
+import { InputGroup, InputGroupAddon, InputGroupInput } from "./ui/input-group";
 
 type Screen = "login" | "dashboard" | "survey";
 
@@ -191,7 +192,7 @@ export function SurveyApp() {
           <p className="lede">A secure workspace for authorised research staff. No participant names or contact details are collected.</p>
           <form onSubmit={login}>
             <label className="field-label" htmlFor="email">Researcher email</label>
-            <div className="input-with-icon"><LockKeyhole size={19} /><input id="email" type="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="researcher@example.com" autoComplete="email" /></div>
+            <InputGroup><InputGroupInput id="email" type="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="researcher@example.com" autoComplete="email" /><InputGroupAddon><LockKeyhole size={19} /></InputGroupAddon></InputGroup>
             {message && <p className="inline-error">{message}</p>}
             <Button className="primary-button" type="submit">Continue <ArrowRight data-icon="inline-end" size={18} /></Button>
           </form>
@@ -234,7 +235,7 @@ export function SurveyApp() {
             <Button className="primary-button new-survey-button" onClick={newParticipant}><UserPlus data-icon="inline-start" size={19} /> New survey</Button>
           </div>
           <div className="dashboard-toolbar">
-            <div className="input-with-icon dashboard-search"><Search size={19} /><input aria-label="Search surveys" value={researchId} onChange={(event) => setResearchId(event.target.value)} placeholder="Search Research ID, hospital, or status" /></div>
+            <InputGroup className="dashboard-search"><InputGroupInput aria-label="Search surveys" value={researchId} onChange={(event) => setResearchId(event.target.value)} placeholder="Search Research ID, hospital, or status" /><InputGroupAddon><Search size={19} /></InputGroupAddon></InputGroup>
             <DatePicker date={createdDate} onChange={setCreatedDate} />
             <span>{visibleParticipants.length} {visibleParticipants.length === 1 ? "survey" : "surveys"}</span>
           </div>
