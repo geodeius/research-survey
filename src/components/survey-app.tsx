@@ -1,7 +1,17 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { ArrowLeft, ArrowRight, Check, Cloud, CloudOff, FileText, LockKeyhole, Search, UserPlus } from "lucide-react";
+import {
+  ArrowLeft,
+  ArrowRight,
+  Check,
+  Cloud,
+  CloudSlash as CloudOff,
+  FileText,
+  LockKey as LockKeyhole,
+  MagnifyingGlass as Search,
+  UserPlus,
+} from "@phosphor-icons/react";
 import { createResearchId } from "@/lib/id";
 import { allQuestions, surveySections } from "@/lib/survey";
 import { getLocalParticipants, saveLocalParticipant } from "@/lib/store";
