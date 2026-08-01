@@ -15,23 +15,39 @@ type ResearcherAuthSuccess = {
 
 export type ResearcherAuth = ResearcherAuthFailure | ResearcherAuthSuccess;
 
+function serverAuthOptions() {
+  return {
+    auth: {
+      persistSession: false,
+      autoRefreshToken: false,
+      detectSessionInUrl: false,
+    },
+  };
+}
+
+function createSupabaseAuthVerifier() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const publishableKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  if (!url || !publishableKey) return null;
+  return createClient(url, publishableKey, serverAuthOptions());
+}
+
 export function createSupabaseAdmin() {
   if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) return null;
-  return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY, {
-    auth: { persistSession: false, autoRefreshToken: false },
-  });
+  return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY, serverAuthOptions());
 }
 
 export async function authorisedResearcher(request: Request): Promise<ResearcherAuth> {
   const admin = createSupabaseAdmin();
+  const authVerifier = createSupabaseAuthVerifier();
   const token = request.headers.get("authorization")?.replace(/^Bearer\s+/i, "");
-  if (!admin) {
+  if (!admin || !authVerifier) {
     console.error("Supabase server configuration is incomplete.");
     return { ok: false, status: 503, error: "The database service is not configured on the server. Contact the study administrator." };
   }
   if (!token) return { ok: false, status: 401, error: "Your sign-in session is missing. Please sign in again." };
 
-  const { data: { user }, error: userError } = await admin.auth.getUser(token);
+  const { data: { user }, error: userError } = await authVerifier.auth.getUser(token);
   if (userError || !user?.email) {
     console.error("Supabase access-token verification failed:", userError?.message || "Token has no email address.");
     return { ok: false, status: 401, error: "Your sign-in session could not be verified. Please sign out and sign in again." };
