@@ -30,7 +30,7 @@ async function syncToSheets(participant: Participant) {
 
 export async function GET(request: NextRequest) {
   const auth = await authorisedResearcher(request);
-  if (!auth) return NextResponse.json({ error: "Unauthorised researcher" }, { status: 401 });
+  if (!auth.ok) return NextResponse.json({ error: auth.error }, { status: auth.status });
   const id = request.nextUrl.searchParams.get("id")?.toUpperCase();
   if (!id) {
     const requestedPage = Number(request.nextUrl.searchParams.get("page") || "1");
@@ -77,7 +77,7 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: Request) {
   const auth = await authorisedResearcher(request);
-  if (!auth) return NextResponse.json({ error: "Unauthorised researcher" }, { status: 401 });
+  if (!auth.ok) return NextResponse.json({ error: auth.error }, { status: auth.status });
   const participant = (await request.json()) as Participant;
   if (!/^DOL-[A-Z0-9]{6}$/.test(participant.id)) return NextResponse.json({ error: "Invalid Research ID" }, { status: 400 });
   participant.researcherEmail = auth.email;
