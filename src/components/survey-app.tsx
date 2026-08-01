@@ -29,6 +29,7 @@ import { Pagination } from "./ui/pagination";
 import { InputGroup, InputGroupAddon, InputGroupInput } from "./ui/input-group";
 import { Skeleton } from "./ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "./ui/table";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "./ui/dropdown-menu";
 
 type Screen = "login" | "dashboard" | "survey";
 type DashboardParticipant = Participant & { answeredCount?: number; isSummary?: boolean };
@@ -252,18 +253,20 @@ export function SurveyApp() {
       <main className="shell dashboard-shell">
         <header className="topbar">
           <div><span className="mini-mark">D</span><strong>DOLII Survey</strong></div>
-          <details className="user-menu">
-            <summary aria-label={`Researcher menu for ${email}`}>
-              <span className="researcher-avatar" aria-hidden="true">{email.charAt(0).toUpperCase()}</span>
-              <span className="researcher-name">{email}</span>
-              <CaretDown className="user-menu-caret" size={14} />
-            </summary>
-            <div className="user-menu-panel">
-              <p>Signed in as</p>
-              <span>{email}</span>
-              <Button variant="ghost" size="sm" onClick={signOut}><SignOut data-icon="inline-start" size={17} /> Sign out</Button>
-            </div>
-          </details>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" className="user-menu-trigger" aria-label={`Researcher menu for ${email}`}>
+                <span className="researcher-avatar" aria-hidden="true">{email.charAt(0).toUpperCase()}</span>
+                <span className="researcher-name">{email}</span>
+                <CaretDown className="user-menu-caret" size={14} />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="user-menu-panel" align="end">
+              <DropdownMenuLabel className="user-menu-account"><p>Signed in as</p><span>{email}</span></DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem variant="destructive" onSelect={() => void signOut()}><SignOut size={17} /> Sign out</DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </header>
         <section className="dashboard-content">
           <div className="dashboard-heading">
