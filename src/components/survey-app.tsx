@@ -51,7 +51,6 @@ export function SurveyApp() {
   const [messageTone, setMessageTone] = useState<MessageTone>("error");
   const [submission, setSubmission] = useState<Submission | null>(null);
   const [saving, setSaving] = useState(false);
-  const [creatingParticipant, setCreatingParticipant] = useState(false);
   const [online, setOnline] = useState(true);
   const [createdDate, setCreatedDate] = useState<Date>();
   const [currentPage, setCurrentPage] = useState(1);
@@ -190,57 +189,45 @@ export function SurveyApp() {
     setScreen("survey");
   }
 
-  async function newParticipant(hospital: Participant["hospital"]) {
-    if (creatingParticipant) return;
-    if (!online) {
-      setMessageTone("error");
-      setMessage("Connect to the internet to allocate a new Research ID.");
-      return;
-    }
-    setCreatingParticipant(true);
+  function newParticipant() {
+    const now = new Date().toISOString();
+    const record: Participant = {
+      id: "",
+      hospital: "Pentecost Hospital",
+      status: "Initial interview",
+      researcherEmail: email.toLowerCase(),
+      answers: {},
+      notes: "",
+      createdAt: now,
+      updatedAt: now,
+    };
+    setParticipant(record);
+    setSectionIndex(0);
     setMessage("");
-    try {
-      const supabase = createSupabaseBrowserClient();
-      if (!supabase) throw new Error("The Research ID service is not configured.");
-      let token = accessToken;
-      if (!token) token = (await supabase.auth.getSession()).data.session?.access_token || "";
-      const allocate = (bearer: string) => fetch("/api/research-ids", {
-        method: "POST",
-        headers: { "content-type": "application/json", authorization: `Bearer ${bearer}` },
-        body: JSON.stringify({ hospital }),
-      });
-      let response = await allocate(token);
-      if (response.status === 401) {
-        const { data, error } = await supabase.auth.refreshSession();
-        if (error || !data.session) throw new Error("Your sign-in session has expired. Please sign in again.");
-        token = data.session.access_token;
-        setAccessToken(token);
-        response = await allocate(token);
-      }
-      const result = await response.json().catch(() => ({ error: "The service returned an unreadable response." })) as { id?: string; error?: string };
-      if (!response.ok || !result.id) throw new Error(result.error || "A Research ID could not be allocated.");
+    setScreen("survey");
+  }
 
-      const now = new Date().toISOString();
-      const record: Participant = {
-        id: result.id,
-        hospital,
-        status: "Initial interview",
-        researcherEmail: email.toLowerCase(),
-        answers: {},
-        notes: "",
-        createdAt: now,
-        updatedAt: now,
-      };
-      saveLocalParticipant(record);
-      setParticipant(record);
-      setSectionIndex(0);
-      setScreen("survey");
-    } catch (error) {
-      setMessageTone("error");
-      setMessage(error instanceof Error ? error.message : "A Research ID could not be allocated.");
-    } finally {
-      setCreatingParticipant(false);
+  async function allocateResearchId(hospital: Participant["hospital"]) {
+    const supabase = createSupabaseBrowserClient();
+    if (!supabase) throw new Error("The Research ID service is not configured.");
+    let token = accessToken;
+    if (!token) token = (await supabase.auth.getSession()).data.session?.access_token || "";
+    const allocate = (bearer: string) => fetch("/api/research-ids", {
+      method: "POST",
+      headers: { "content-type": "application/json", authorization: `Bearer ${bearer}` },
+      body: JSON.stringify({ hospital }),
+    });
+    let response = await allocate(token);
+    if (response.status === 401) {
+      const { data, error } = await supabase.auth.refreshSession();
+      if (error || !data.session) throw new Error("Your sign-in session has expired. Please sign in again.");
+      token = data.session.access_token;
+      setAccessToken(token);
+      response = await allocate(token);
     }
+    const result = await response.json().catch(() => ({ error: "The service returned an unreadable response." })) as { id?: string; error?: string };
+    if (!response.ok || !result.id) throw new Error(result.error || "A Research ID could not be allocated.");
+    return result.id;
   }
 
   async function syncParticipant(record: Participant) {
@@ -277,7 +264,25 @@ export function SurveyApp() {
     if (!participant || saving) return;
     setSaving(true);
     setMessage("");
-    const updated = { ...participant, updatedAt: new Date().toISOString() };
+    let record = participant;
+    if (!record.id) {
+      if (!online) {
+        setSaving(false);
+        setMessageTone("error");
+        setMessage("Connect to the internet to assign a Research ID and save this new survey.");
+        return;
+      }
+      try {
+        const id = await allocateResearchId(record.hospital);
+        record = { ...record, id };
+      } catch (error) {
+        setSaving(false);
+        setMessageTone("error");
+        setMessage(error instanceof Error ? error.message : "A Research ID could not be allocated.");
+        return;
+      }
+    }
+    const updated = { ...record, updatedAt: new Date().toISOString() };
     saveLocalParticipant(updated);
     setParticipant(updated);
 
@@ -372,26 +377,6 @@ export function SurveyApp() {
     const totalPages = Math.max(1, Math.ceil(totalParticipants / dashboardPageSize));
     const safePage = Math.min(currentPage, totalPages);
     const hasFilters = Boolean(researchId.trim() || createdDate);
-    const newSurveyMenu = (variant: "primary" | "secondary" = "primary") => (
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button
-            className={variant === "primary" ? "primary-button new-survey-button" : "secondary-button"}
-            variant={variant === "primary" ? "default" : "outline"}
-            disabled={creatingParticipant}
-          >
-            <UserPlus data-icon="inline-start" size={variant === "primary" ? 19 : 18} />
-            {creatingParticipant ? "Creating…" : variant === "primary" ? "New survey" : "Create first survey"}
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
-          <DropdownMenuLabel>Select hospital</DropdownMenuLabel>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem onSelect={() => void newParticipant("Pentecost Hospital")}>Pentecost Hospital · P</DropdownMenuItem>
-          <DropdownMenuItem onSelect={() => void newParticipant("Madina Polyclinic")}>Madina Polyclinic · M</DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
-    );
     return (
       <main className="shell dashboard-shell">
         <header className="topbar">
@@ -414,7 +399,7 @@ export function SurveyApp() {
         <section className="dashboard-content">
           <div className="dashboard-heading">
             <div><h1>Your surveys</h1><p>Continue an existing record or begin a new participant survey.</p></div>
-            {newSurveyMenu()}
+            <Button className="primary-button new-survey-button" onClick={newParticipant}><UserPlus data-icon="inline-start" size={19} /> New survey</Button>
           </div>
           {message && <p className={`save-message ${messageTone}`}>{message}</p>}
           <div className="dashboard-toolbar">
@@ -424,7 +409,7 @@ export function SurveyApp() {
           </div>
           <div className="survey-table-card">
             {dashboardLoading ? <SurveyTableSkeleton /> : participants.length === 0 ? (
-              <div className="dashboard-empty"><div className="empty-icon"><FileText size={25} /></div><h2>{hasFilters ? "No matching surveys" : "Your first survey starts here"}</h2><p>{hasFilters ? "Try a different Research ID, status, or creation date." : "Create a participant record now, then return here to continue it at follow-up."}</p>{!hasFilters && newSurveyMenu("secondary")}</div>
+              <div className="dashboard-empty"><div className="empty-icon"><FileText size={25} /></div><h2>{hasFilters ? "No matching surveys" : "Your first survey starts here"}</h2><p>{hasFilters ? "Try a different Research ID, status, or creation date." : "Create a participant record now, then return here to continue it at follow-up."}</p>{!hasFilters && <Button className="secondary-button" variant="outline" onClick={newParticipant}><UserPlus data-icon="inline-start" size={18} /> Create first survey</Button>}</div>
             ) : (
               <Table><SurveyTableHeader /><TableBody>{participants.map((record) => {
                 const answered = record.answeredCount ?? allQuestions.filter((question) => { const value = record.answers[question.id]; return Array.isArray(value) ? value.length > 0 : Boolean(value); }).length;
@@ -446,7 +431,7 @@ export function SurveyApp() {
     <main className="survey-shell">
       <header className="survey-header">
         <Button className="icon-button" variant="outline" size="icon" aria-label="Back to surveys dashboard" onClick={() => setScreen("dashboard")}><ArrowLeft size={21} /></Button>
-        <div><p>Research ID</p><strong>{participant.id}</strong></div>
+        <div><p>Research ID</p><strong>{participant.id || "Assigned when saved"}</strong></div>
         <Badge variant="outline" className={`sync-pill ${online ? "" : "offline"}`}>{online ? <Cloud data-icon="inline-start" size={16} /> : <CloudOff data-icon="inline-start" size={16} />}{saving ? "Saving" : online ? "Ready" : "Offline"}</Badge>
       </header>
       <div className="progress-track"><span style={{ width: `${progress}%` }} /></div>
@@ -465,7 +450,7 @@ export function SurveyApp() {
           <div className="section-intro"><p className="eyebrow">Section {sectionIndex + 1} of {surveySections.length}</p><h1>{section.title}</h1><p>Answer what is available today. You can safely return to this record later.</p></div>
           {sectionIndex === 0 && (
             <article className="question-card study-fields">
-              <div><label className="field-label">Hospital</label><select value={participant.hospital} onChange={(event) => setParticipant({ ...participant, hospital: event.target.value as Participant["hospital"] })}><option>Pentecost Hospital</option><option>Madina Polyclinic</option></select></div>
+              <div><label className="field-label">Hospital</label><select value={participant.hospital} disabled={Boolean(participant.id)} onChange={(event) => setParticipant({ ...participant, hospital: event.target.value as Participant["hospital"] })}><option>Pentecost Hospital</option><option>Madina Polyclinic</option></select></div>
               <div><label className="field-label">Record status</label><select value={participant.status} onChange={(event) => setParticipant({ ...participant, status: event.target.value as Participant["status"] })}><option>Initial interview</option><option>Awaiting follow-up</option><option>Follow-up in progress</option><option>Complete</option></select></div>
             </article>
           )}
