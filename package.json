@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "migrate:sheet-ids": "node --env-file=.env.local scripts/migrate-google-sheet-research-ids.mjs"
   },
   "dependencies": {
     "@phosphor-icons/react": "^2.1.10",
