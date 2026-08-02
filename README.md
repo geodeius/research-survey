@@ -43,6 +43,10 @@ The browser receives only the public anonymous key. The service-role key remains
 
 For an existing database created before sequential Research IDs were introduced, run `supabase/migrations/20260801_sequential_research_ids.sql` once in the Supabase SQL editor. New records then use `DOL-P001` for Pentecost Hospital and `DOL-M001` for Madina Polyclinic; existing IDs remain valid.
 
+To convert existing random IDs to the sequential format, run `supabase/migrations/20260802_migrate_existing_research_ids.sql` once after the sequential-ID migration. It assigns numbers by hospital and original creation order, updates audit-log references, advances both counters, and returns the old-to-new mapping.
+
+After the database migration, run `npm run migrate:sheet-ids` from a configured local checkout to replace the same legacy IDs in the `Web app responses` Google Sheets tab.
+
 ## Google Sheets setup
 
 1. Create a Google Cloud service account with Google Sheets API access.
